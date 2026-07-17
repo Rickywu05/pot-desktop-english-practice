@@ -9,7 +9,7 @@
         <a href="LICENSE"><img alt="License: GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-blue.svg"/></a>
     </p>
     <p>
-        <a href="https://github.com/Rickywu05/pot-desktop-english-practice/releases/tag/english-practice-preview-3">下载安装包</a> ·
+        <a href="https://github.com/Rickywu05/pot-desktop-english-practice/releases/tag/english-practice-preview-4">下载安装包</a> ·
         <a href="ENGLISH_PRACTICE.md">功能说明</a> ·
         <a href="https://github.com/pot-app/pot-desktop">Pot 官方项目</a>
     </p>
@@ -28,17 +28,20 @@
 - 内置 GLM、Kimi、MiniMax、DeepSeek 和小米 MiMo 配置预设，通常只需填写 API Key。
 - 支持 Base URL、模型名称、自定义请求参数、自定义请求头，以及兼容的流式或非流式 Chat Completions 响应。
 - 练习区展开时左右等宽；收起后恢复原窗口大小，不影响原有翻译流程。
+- AI 检查结果不会因左侧执行普通翻译而消失；相同中文、英文和模型不会重复请求。
+- 当前练习模型不会出现在左侧翻译卡片中，避免普通翻译额外消耗该模型的 Token。
+- 右侧英文输入框关闭浏览器拼写检查；AI 只在标点影响语法、含义或自然度时提示问题。
 
 ## 下载与安装
 
-当前可直接使用的构建为 **Preview 3**：
+当前可直接使用的构建为 **Preview 4**：
 
-- [下载 Windows x64 安装包](https://github.com/Rickywu05/pot-desktop-english-practice/releases/download/english-practice-preview-3/Pot-English-Practice-Preview-3-x64-setup.exe)
+- [下载 Windows x64 安装包](https://github.com/Rickywu05/pot-desktop-english-practice/releases/download/english-practice-preview-4/Pot-English-Practice-Preview-4-x64-setup.exe)
 - [查看全部 Releases 和版本说明](https://github.com/Rickywu05/pot-desktop-english-practice/releases)
-- SHA256：`8E04097A19369C625E50D8FA944B9816AFAA2DE70B13C3F4AEAEFEDC5FC7B512`
+- SHA256：`7B8678A9B505D6383E0061229E40B7EE54FBAFA989125351C4A09D6167800DDA`
 
 > [!WARNING]
-> Preview 3 目前只提供 Windows x64 安装包，并且没有商业代码签名证书。Windows 可能显示“未知发布者”。安装前可使用上面的 SHA256 校验文件完整性。
+> Preview 4 目前只提供 Windows x64 安装包，并且没有商业代码签名证书。Windows 可能显示“未知发布者”。安装前可使用上面的 SHA256 校验文件完整性。
 
 如果电脑中已经运行 Pot，请先从系统托盘退出旧进程再安装。本修改版与官方 Pot 使用相同的应用标识和本地配置目录，安装前建议备份重要配置。
 

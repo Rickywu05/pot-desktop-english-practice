@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { findRecoverableOpenAIServiceInstanceKeys } from './service_instances.js';
+import {
+    findRecoverableOpenAIServiceInstanceKeys,
+    isPracticeTranslationService,
+    resolvePracticeServiceInstance,
+} from './service_instances.js';
 
 const configuredDeepSeek = {
     service: 'openai',
@@ -43,4 +47,27 @@ test('recovers a service authenticated through custom headers', () => {
     ];
 
     assert.deepEqual(findRecoverableOpenAIServiceInstanceKeys(entries), ['openai@header-auth']);
+});
+
+test('identifies only the selected practice service for exclusion from left translation', () => {
+    assert.equal(isPracticeTranslationService('openai@deepseek', 'openai@deepseek'), true);
+    assert.equal(isPracticeTranslationService('google', 'openai@deepseek'), false);
+    assert.equal(isPracticeTranslationService('openai@mimo', ''), false);
+});
+
+test('resolves the first configured compatible service before a practice selection is saved', () => {
+    assert.equal(
+        resolvePracticeServiceInstance('', ['google', 'openai@deepseek'], {
+            google: { service: 'google' },
+            'openai@deepseek': configuredDeepSeek,
+        }),
+        'openai@deepseek'
+    );
+    assert.equal(
+        resolvePracticeServiceInstance('openai@mimo', ['openai@deepseek', 'openai@mimo'], {
+            'openai@deepseek': configuredDeepSeek,
+            'openai@mimo': { ...configuredDeepSeek, model: 'configured-mimo-model' },
+        }),
+        'openai@mimo'
+    );
 });

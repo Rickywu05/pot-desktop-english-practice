@@ -476,6 +476,7 @@
             "input_title": "英语表达",
             "input_placeholder": "输入英文…",
             "feedback_title": "修改建议",
+            "feedback_stale": "待重新检查",
             "check_hint": "检查（Ctrl + Enter）",
             "select_service": "选择模型",
             "no_service": "暂无兼容模型",

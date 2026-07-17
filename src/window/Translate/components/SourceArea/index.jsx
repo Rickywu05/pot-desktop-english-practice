@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { HiTranslate } from 'react-icons/hi';
 import { LuDelete } from 'react-icons/lu';
 import { invoke } from '@tauri-apps/api';
-import { atom, useAtom } from 'jotai';
+import { atom, useAtom, useSetAtom } from 'jotai';
 import { getServiceName, getServiceSouceType, ServiceSourceType } from '../../../../utils/service_instance';
 import { useConfig, useSyncAtom, useVoice, useToastStyle } from '../../../../hooks';
 import { invoke_plugin } from '../../../../utils/invoke_plugin';
@@ -24,6 +24,7 @@ import { info } from 'tauri-plugin-log-api';
 import { debug } from 'tauri-plugin-log-api';
 
 export const sourceTextAtom = atom('');
+export const sourceDraftTextAtom = atom('');
 export const detectLanguageAtom = atom('');
 
 let unlisten = null;
@@ -33,6 +34,7 @@ export default function SourceArea(props) {
     const { pluginList, serviceInstanceConfigMap } = props;
     const [appFontSize] = useConfig('app_font_size', 16);
     const [sourceText, setSourceText, syncSourceText] = useSyncAtom(sourceTextAtom);
+    const setSourceDraftText = useSetAtom(sourceDraftTextAtom);
     const [detectLanguage, setDetectLanguage] = useAtom(detectLanguageAtom);
     const [incrementalTranslate] = useConfig('incremental_translate', false);
     const [dynamicTranslate] = useConfig('dynamic_translate', false);
@@ -48,6 +50,10 @@ export default function SourceArea(props) {
     const { t } = useTranslation();
     const textAreaRef = useRef();
     const speak = useVoice();
+
+    useEffect(() => {
+        setSourceDraftText(sourceText);
+    }, [sourceText, setSourceDraftText]);
 
     const handleNewText = async (text) => {
         text = text.trim();

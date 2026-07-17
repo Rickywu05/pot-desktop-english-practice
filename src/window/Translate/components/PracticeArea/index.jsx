@@ -20,8 +20,9 @@ import ReactMarkdown from 'react-markdown';
 import { useConfig } from '../../../../hooks';
 import { chatCompletions, isOpenAICompatibleConfig } from '../../../../services/openai_compatible';
 import { INSTANCE_NAME_CONFIG_KEY } from '../../../../utils/service_instance';
-import { sourceTextAtom } from '../SourceArea';
+import { sourceDraftTextAtom } from '../SourceArea';
 import { createEnglishPracticeMessages } from './prompt';
+import { canReusePracticeFeedback, createPracticeRequestKey, isPracticeFeedbackStale } from './request_state';
 
 function formatRequestError(error, t) {
     const status = error?.status;
@@ -44,13 +45,14 @@ function hasAuthentication(config) {
 
 export default function PracticeArea({ translateServiceInstanceList, serviceInstanceConfigMap }) {
     const { t } = useTranslation();
-    const sourceText = useAtomValue(sourceTextAtom);
+    const sourceText = useAtomValue(sourceDraftTextAtom);
     const [appFontSize] = useConfig('app_font_size', 16);
     const [selectedServiceInstance, setSelectedServiceInstance] = useConfig('english_practice_service_instance', '');
     const [userText, setUserText] = useState('');
     const [feedback, setFeedback] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [lastCompletedKey, setLastCompletedKey] = useState('');
     const requestIdRef = useRef(0);
 
     const compatibleServices = useMemo(() => {
@@ -73,17 +75,11 @@ export default function PracticeArea({ translateServiceInstanceList, serviceInst
         setSelectedServiceInstance(defaultService.instanceKey);
     }, [compatibleServices, selectedService, selectedServiceInstance, setSelectedServiceInstance]);
 
-    useEffect(() => {
-        requestIdRef.current += 1;
-        setFeedback('');
-        setError('');
-        setIsLoading(false);
-    }, [sourceText]);
-
-    const clearPreviousFeedback = () => {
-        setFeedback('');
-        setError('');
-    };
+    const currentRequestKey = createPracticeRequestKey({
+        sourceText,
+        userText,
+        serviceInstance: selectedServiceInstance,
+    });
 
     const checkEnglish = async () => {
         if (isLoading || !sourceText.trim() || !userText.trim()) return;
@@ -96,9 +92,18 @@ export default function PracticeArea({ translateServiceInstanceList, serviceInst
             return;
         }
 
+        const requestKey = createPracticeRequestKey({
+            sourceText,
+            userText,
+            serviceInstance: selectedService.instanceKey,
+        });
+        if (canReusePracticeFeedback({ feedback, lastCompletedKey, currentKey: requestKey })) {
+            setError('');
+            return;
+        }
+
         const requestId = requestIdRef.current + 1;
         requestIdRef.current = requestId;
-        setFeedback('');
         setError('');
         setIsLoading(true);
 
@@ -110,15 +115,14 @@ export default function PracticeArea({ translateServiceInstanceList, serviceInst
                 onUpdate: (value) => {
                     if (requestIdRef.current === requestId) setFeedback(value);
                 },
-                onStreamFallback: () => {
-                    if (requestIdRef.current === requestId) setFeedback('');
-                },
             });
 
-            if (requestIdRef.current === requestId) setFeedback(result);
+            if (requestIdRef.current === requestId) {
+                setFeedback(result);
+                setLastCompletedKey(requestKey);
+            }
         } catch (requestError) {
             if (requestIdRef.current === requestId) {
-                setFeedback('');
                 setError(formatRequestError(requestError, t));
             }
         } finally {
@@ -131,6 +135,8 @@ export default function PracticeArea({ translateServiceInstanceList, serviceInst
         selectedService?.instanceKey ||
         t('english_practice.select_service');
     const canCheck = Boolean(sourceText.trim() && userText.trim() && selectedService && !isLoading);
+    const feedbackIsStale =
+        !isLoading && isPracticeFeedbackStale({ feedback, lastCompletedKey, currentKey: currentRequestKey });
 
     return (
         <div className='flex h-full min-h-0 flex-col gap-2'>
@@ -147,6 +153,7 @@ export default function PracticeArea({ translateServiceInstanceList, serviceInst
                         className='h-full min-h-[76px] w-full resize-none bg-content1 outline-none'
                         style={{ fontSize: `${appFontSize}px` }}
                         value={userText}
+                        spellCheck={false}
                         readOnly={isLoading}
                         placeholder={t('english_practice.input_placeholder')}
                         onKeyDown={(event) => {
@@ -157,7 +164,7 @@ export default function PracticeArea({ translateServiceInstanceList, serviceInst
                         }}
                         onChange={(event) => {
                             setUserText(event.target.value);
-                            clearPreviousFeedback();
+                            setError('');
                         }}
                     />
                 </CardBody>
@@ -180,7 +187,7 @@ export default function PracticeArea({ translateServiceInstanceList, serviceInst
                                 requestIdRef.current += 1;
                                 setSelectedServiceInstance(String(key));
                                 setIsLoading(false);
-                                clearPreviousFeedback();
+                                setError('');
                             }}
                         >
                             {compatibleServices.map(({ instanceKey, config }) => (
@@ -210,8 +217,13 @@ export default function PracticeArea({ translateServiceInstanceList, serviceInst
                 shadow='none'
                 className='min-h-[180px] flex-[3] bg-content1 rounded-[10px]'
             >
-                <CardHeader className='px-[12px] pb-0 pt-[9px] text-small font-medium'>
-                    {t('english_practice.feedback_title')}
+                <CardHeader className='flex px-[12px] pb-0 pt-[9px] text-small font-medium'>
+                    <span>{t('english_practice.feedback_title')}</span>
+                    {feedbackIsStale && (
+                        <span className='ml-auto text-tiny font-normal text-warning'>
+                            {t('english_practice.feedback_stale')}
+                        </span>
+                    )}
                 </CardHeader>
                 <CardBody className='min-h-0 overflow-y-auto p-[12px]'>
                     {error ? (

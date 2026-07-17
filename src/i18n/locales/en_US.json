@@ -476,6 +476,7 @@
             "input_title": "English",
             "input_placeholder": "Enter English…",
             "feedback_title": "Suggestions",
+            "feedback_stale": "Needs recheck",
             "check_hint": "Check (Ctrl + Enter)",
             "select_service": "Select model",
             "no_service": "No compatible model",

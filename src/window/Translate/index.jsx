@@ -19,7 +19,11 @@ import { osType } from '../../utils/env';
 import { useConfig } from '../../hooks';
 import { store } from '../../utils/store';
 import { info } from 'tauri-plugin-log-api';
-import { findRecoverableOpenAIServiceInstanceKeys } from '../../services/translate/openai/service_instances';
+import {
+    findRecoverableOpenAIServiceInstanceKeys,
+    isPracticeTranslationService,
+    resolvePracticeServiceInstance,
+} from '../../services/translate/openai/service_instances';
 
 let blurTimeout = null;
 let resizeTimeout = null;
@@ -88,6 +92,7 @@ export default function Translate() {
     const [ttsServiceInstanceList] = useConfig('tts_service_list', ['lingva_tts']);
     const [collectionServiceInstanceList] = useConfig('collection_service_list', []);
     const [hideLanguage] = useConfig('hide_language', false);
+    const [practiceServiceInstance] = useConfig('english_practice_service_instance', '');
     const [practiceVisible, setPracticeVisible] = useState(false);
     const [normalTranslatePanelWidth, setNormalTranslatePanelWidth] = useState(null);
     const [pined, setPined] = useState(false);
@@ -98,6 +103,11 @@ export default function Translate() {
     const practiceResizeRef = useRef(false);
     const normalWindowBoundsRef = useRef(null);
     const translatePanelRef = useRef(null);
+    const effectivePracticeServiceInstance = resolvePracticeServiceInstance(
+        practiceServiceInstance,
+        translateServiceInstanceList,
+        serviceInstanceConfigMap
+    );
     const reorder = (list, startIndex, endIndex) => {
         const result = Array.from(list);
         const [removed] = result.splice(startIndex, 1);
@@ -442,12 +452,17 @@ export default function Translate() {
                                             {...provided.droppableProps}
                                         >
                                             {translateServiceInstanceList !== null &&
+                                                practiceServiceInstance !== null &&
                                                 serviceInstanceConfigMap !== null &&
                                                 translateServiceInstanceList.map((serviceInstanceKey, index) => {
                                                     const config = serviceInstanceConfigMap[serviceInstanceKey] ?? {};
                                                     const enable = config['enable'] ?? true;
+                                                    const isPracticeService = isPracticeTranslationService(
+                                                        serviceInstanceKey,
+                                                        effectivePracticeServiceInstance
+                                                    );
 
-                                                    return enable ? (
+                                                    return enable && !isPracticeService ? (
                                                         <Draggable
                                                             key={serviceInstanceKey}
                                                             draggableId={serviceInstanceKey}
@@ -483,9 +498,9 @@ export default function Translate() {
                                 </Droppable>
                             </DragDropContext>
                         </div>
-                        {showPracticeArea && serviceInstanceConfigMap !== null && (
+                        {serviceInstanceConfigMap !== null && (
                             <div
-                                className='h-full min-w-0 shrink-0 overflow-hidden'
+                                className={`${showPracticeArea ? '' : 'hidden'} h-full min-w-0 shrink-0 overflow-hidden`}
                                 style={
                                     normalTranslatePanelWidth !== null
                                         ? { width: `${normalTranslatePanelWidth}px` }

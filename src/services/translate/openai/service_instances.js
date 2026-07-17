@@ -21,3 +21,17 @@ export function findRecoverableOpenAIServiceInstanceKeys(entries, activeInstance
         })
         .map(([instanceKey]) => instanceKey);
 }
+
+export function isPracticeTranslationService(instanceKey, selectedPracticeServiceInstance) {
+    return Boolean(selectedPracticeServiceInstance && instanceKey === selectedPracticeServiceInstance);
+}
+
+export function resolvePracticeServiceInstance(selectedInstanceKey, activeInstanceKeys, serviceConfigMap) {
+    if (selectedInstanceKey && activeInstanceKeys?.includes(selectedInstanceKey)) return selectedInstanceKey;
+
+    return (
+        activeInstanceKeys?.find((instanceKey) =>
+            isConfiguredOpenAICompatibleService(serviceConfigMap?.[instanceKey])
+        ) ?? ''
+    );
+}
