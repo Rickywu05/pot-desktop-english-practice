@@ -9,7 +9,7 @@
         <a href="LICENSE"><img alt="License: GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-blue.svg"/></a>
     </p>
     <p>
-        <a href="https://github.com/Rickywu05/pot-desktop-english-practice/releases/tag/english-practice-preview-4">下载安装包</a> ·
+        <a href="https://github.com/Rickywu05/pot-desktop-english-practice/releases/tag/english-practice-preview-5">下载安装包</a> ·
         <a href="ENGLISH_PRACTICE.md">功能说明</a> ·
         <a href="https://github.com/pot-app/pot-desktop">Pot 官方项目</a>
     </p>
@@ -31,17 +31,18 @@
 - AI 检查结果不会因左侧执行普通翻译而消失；相同中文、英文和模型不会重复请求。
 - 当前练习模型不会出现在左侧翻译卡片中，避免普通翻译额外消耗该模型的 Token。
 - 右侧英文输入框关闭浏览器拼写检查；AI 只在标点影响语法、含义或自然度时提示问题。
+- 练习区展开后左右两侧会随窗口宽度等比伸缩；收起后保持原有单栏翻译界面。
+- 可在左侧打开“文献语境翻译”卡片：仅在手动点击时调用 AI，并结合全文语境处理术语、专有名词与缩写。
 
 ## 下载与安装
 
-当前可直接使用的构建为 **Preview 4**：
+当前可直接使用的构建为 **Preview 5**：
 
-- [下载 Windows x64 安装包](https://github.com/Rickywu05/pot-desktop-english-practice/releases/download/english-practice-preview-4/Pot-English-Practice-Preview-4-x64-setup.exe)
+- [下载 Windows 安装包](https://github.com/Rickywu05/pot-desktop-english-practice/releases/tag/english-practice-preview-5)
 - [查看全部 Releases 和版本说明](https://github.com/Rickywu05/pot-desktop-english-practice/releases)
-- SHA256：`7B8678A9B505D6383E0061229E40B7EE54FBAFA989125351C4A09D6167800DDA`
 
 > [!WARNING]
-> Preview 4 目前只提供 Windows x64 安装包，并且没有商业代码签名证书。Windows 可能显示“未知发布者”。安装前可使用上面的 SHA256 校验文件完整性。
+> Preview 5 目前正在由 GitHub Actions 生成 Windows 安装包。发布完成后可在上面的 Release 页面下载；安装包没有商业代码签名证书，Windows 可能显示“未知发布者”。
 
 如果电脑中已经运行 Pot，请先从系统托盘退出旧进程再安装。本修改版与官方 Pot 使用相同的应用标识和本地配置目录，安装前建议备份重要配置。
 
