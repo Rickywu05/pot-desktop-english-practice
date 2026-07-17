@@ -1,17 +1,20 @@
 import { readDir, BaseDirectory, readTextFile, exists } from '@tauri-apps/api/fs';
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
-import { appWindow, currentMonitor } from '@tauri-apps/api/window';
+import { appWindow, currentMonitor, PhysicalPosition, PhysicalSize } from '@tauri-apps/api/window';
 import { appConfigDir, join } from '@tauri-apps/api/path';
 import { convertFileSrc } from '@tauri-apps/api/tauri';
-import { Spacer, Button } from '@nextui-org/react';
+import { Spacer, Button, Tooltip } from '@nextui-org/react';
 import { AiFillCloseCircle } from 'react-icons/ai';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { listen } from '@tauri-apps/api/event';
 import { BsPinFill } from 'react-icons/bs';
+import { MdOutlineSchool } from 'react-icons/md';
 
 import LanguageArea from './components/LanguageArea';
 import SourceArea from './components/SourceArea';
 import TargetArea from './components/TargetArea';
+import PracticeArea from './components/PracticeArea';
 import { osType } from '../../utils/env';
 import { useConfig } from '../../hooks';
 import { store } from '../../utils/store';
@@ -20,6 +23,9 @@ import { info } from 'tauri-plugin-log-api';
 let blurTimeout = null;
 let resizeTimeout = null;
 let moveTimeout = null;
+
+const PRACTICE_PANEL_GAP = 8;
+const PRACTICE_PANEL_HORIZONTAL_PADDING = 16;
 
 const listenBlur = () => {
     return listen('tauri://blur', () => {
@@ -64,6 +70,7 @@ void listen('tauri://move', () => {
 });
 
 export default function Translate() {
+    const { t } = useTranslation();
     const [closeOnBlur] = useConfig('translate_close_on_blur', true);
     const [alwaysOnTop] = useConfig('translate_always_on_top', false);
     const [windowPosition] = useConfig('translate_window_position', 'mouse');
@@ -80,9 +87,16 @@ export default function Translate() {
     const [ttsServiceInstanceList] = useConfig('tts_service_list', ['lingva_tts']);
     const [collectionServiceInstanceList] = useConfig('collection_service_list', []);
     const [hideLanguage] = useConfig('hide_language', false);
+    const [practiceVisible, setPracticeVisible] = useState(false);
+    const [normalTranslatePanelWidth, setNormalTranslatePanelWidth] = useState(null);
     const [pined, setPined] = useState(false);
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const [pluginList, setPluginList] = useState(null);
     const [serviceInstanceConfigMap, setServiceInstanceConfigMap] = useState(null);
+    const practiceVisibleRef = useRef(false);
+    const practiceResizeRef = useRef(false);
+    const normalWindowBoundsRef = useRef(null);
+    const translatePanelRef = useRef(null);
     const reorder = (list, startIndex, endIndex) => {
         const result = Array.from(list);
         const [removed] = result.splice(startIndex, 1);
@@ -143,7 +157,7 @@ export default function Translate() {
                     clearTimeout(resizeTimeout);
                 }
                 resizeTimeout = setTimeout(async () => {
-                    if (appWindow.label === 'translate') {
+                    if (appWindow.label === 'translate' && !practiceVisibleRef.current) {
                         let size = await appWindow.outerSize();
                         const monitor = await currentMonitor();
                         const factor = monitor.scaleFactor;
@@ -228,6 +242,70 @@ export default function Translate() {
         collectionServiceInstanceList,
     ]);
 
+    useEffect(() => {
+        const updateWindowWidth = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', updateWindowWidth);
+        return () => window.removeEventListener('resize', updateWindowWidth);
+    }, []);
+
+    const togglePracticeArea = async () => {
+        if (practiceResizeRef.current) return;
+        practiceResizeRef.current = true;
+
+        try {
+            const monitor = await currentMonitor();
+            const factor = monitor.scaleFactor;
+            const currentSize = await appWindow.outerSize();
+            const currentPosition = await appWindow.outerPosition();
+
+            if (!practiceVisibleRef.current) {
+                const translatePanelWidth = translatePanelRef.current?.getBoundingClientRect().width ?? window.innerWidth;
+                setNormalTranslatePanelWidth(translatePanelWidth);
+                normalWindowBoundsRef.current = {
+                    width: currentSize.width,
+                    height: currentSize.height,
+                    x: currentPosition.x,
+                    y: currentPosition.y,
+                };
+
+                const expandedWidth = Math.min(
+                    currentSize.width + (translatePanelWidth + PRACTICE_PANEL_GAP) * factor,
+                    monitor.size.width,
+                );
+                const rightEdge = monitor.position.x + monitor.size.width;
+                const expandedX = Math.max(monitor.position.x, Math.min(currentPosition.x, rightEdge - expandedWidth));
+
+                if (expandedX !== currentPosition.x) {
+                    await appWindow.setPosition(new PhysicalPosition(expandedX, currentPosition.y));
+                }
+                await appWindow.setSize(new PhysicalSize(expandedWidth, currentSize.height));
+                practiceVisibleRef.current = true;
+                setPracticeVisible(true);
+            } else {
+                const normalBounds = normalWindowBoundsRef.current;
+                practiceVisibleRef.current = false;
+                setPracticeVisible(false);
+
+                if (normalBounds) {
+                    await appWindow.setSize(new PhysicalSize(normalBounds.width, normalBounds.height));
+                    await appWindow.setPosition(new PhysicalPosition(normalBounds.x, normalBounds.y));
+                }
+            }
+        } catch (error) {
+            info(`Failed to resize practice area: ${error}`);
+            practiceVisibleRef.current = false;
+            setPracticeVisible(false);
+        } finally {
+            practiceResizeRef.current = false;
+        }
+    };
+
+    const requiredPracticeWidth =
+        normalTranslatePanelWidth === null
+            ? Number.POSITIVE_INFINITY
+            : normalTranslatePanelWidth * 2 + PRACTICE_PANEL_GAP + PRACTICE_PANEL_HORIZONTAL_PADDING;
+    const showPracticeArea = practiceVisible && windowWidth >= requiredPracticeWidth;
+
     return (
         pluginList && (
             <div
@@ -240,27 +318,43 @@ export default function Translate() {
                     data-tauri-drag-region='true'
                 />
                 <div className={`h-[35px] w-full flex ${osType === 'Darwin' ? 'justify-end' : 'justify-between'}`}>
-                    <Button
-                        isIconOnly
-                        size='sm'
-                        variant='flat'
-                        disableAnimation
-                        className='my-auto bg-transparent'
-                        onPress={() => {
-                            if (pined) {
-                                if (closeOnBlur) {
-                                    unlisten = listenBlur();
+                    <div className='flex'>
+                        <Button
+                            isIconOnly
+                            size='sm'
+                            variant='flat'
+                            disableAnimation
+                            className='my-auto bg-transparent'
+                            onPress={() => {
+                                if (pined) {
+                                    if (closeOnBlur) {
+                                        unlisten = listenBlur();
+                                    }
+                                    appWindow.setAlwaysOnTop(false);
+                                } else {
+                                    unlistenBlur();
+                                    appWindow.setAlwaysOnTop(true);
                                 }
-                                appWindow.setAlwaysOnTop(false);
-                            } else {
-                                unlistenBlur();
-                                appWindow.setAlwaysOnTop(true);
-                            }
-                            setPined(!pined);
-                        }}
-                    >
-                        <BsPinFill className={`text-[20px] ${pined ? 'text-primary' : 'text-default-400'}`} />
-                    </Button>
+                                setPined(!pined);
+                            }}
+                        >
+                            <BsPinFill className={`text-[20px] ${pined ? 'text-primary' : 'text-default-400'}`} />
+                        </Button>
+                        <Tooltip content={practiceVisible ? t('english_practice.hide') : t('english_practice.show')}>
+                            <Button
+                                isIconOnly
+                                size='sm'
+                                variant='flat'
+                                disableAnimation
+                                className='my-auto bg-transparent'
+                                onPress={() => void togglePracticeArea()}
+                            >
+                                <MdOutlineSchool
+                                    className={`text-[20px] ${practiceVisible ? 'text-primary' : 'text-default-400'}`}
+                                />
+                            </Button>
+                        </Tooltip>
+                    </div>
                     <Button
                         isIconOnly
                         size='sm'
@@ -275,68 +369,95 @@ export default function Translate() {
                     </Button>
                 </div>
                 <div className={`${osType === 'Linux' ? 'h-[calc(100vh-37px)]' : 'h-[calc(100vh-35px)]'} px-[8px]`}>
-                    <div className='h-full overflow-y-auto'>
-                        <div>
-                            {serviceInstanceConfigMap !== null && (
-                                <SourceArea
-                                    pluginList={pluginList}
+                    <div className='flex h-full min-h-0 gap-2 overflow-hidden'>
+                        <div
+                            ref={translatePanelRef}
+                            className={`${showPracticeArea ? 'shrink-0' : 'w-full'} min-w-0 overflow-y-auto`}
+                            style={
+                                showPracticeArea && normalTranslatePanelWidth !== null
+                                    ? { width: `${normalTranslatePanelWidth}px` }
+                                    : undefined
+                            }
+                        >
+                            <div>
+                                {serviceInstanceConfigMap !== null && (
+                                    <SourceArea
+                                        pluginList={pluginList}
+                                        serviceInstanceConfigMap={serviceInstanceConfigMap}
+                                    />
+                                )}
+                            </div>
+                            <div className={`${hideLanguage && 'hidden'}`}>
+                                <LanguageArea />
+                                <Spacer y={2} />
+                            </div>
+                            <DragDropContext onDragEnd={onDragEnd}>
+                                <Droppable
+                                    droppableId='droppable'
+                                    direction='vertical'
+                                >
+                                    {(provided) => (
+                                        <div
+                                            ref={provided.innerRef}
+                                            {...provided.droppableProps}
+                                        >
+                                            {translateServiceInstanceList !== null &&
+                                                serviceInstanceConfigMap !== null &&
+                                                translateServiceInstanceList.map((serviceInstanceKey, index) => {
+                                                    const config = serviceInstanceConfigMap[serviceInstanceKey] ?? {};
+                                                    const enable = config['enable'] ?? true;
+
+                                                    return enable ? (
+                                                        <Draggable
+                                                            key={serviceInstanceKey}
+                                                            draggableId={serviceInstanceKey}
+                                                            index={index}
+                                                        >
+                                                            {(provided) => (
+                                                                <div
+                                                                    ref={provided.innerRef}
+                                                                    {...provided.draggableProps}
+                                                                >
+                                                                    <TargetArea
+                                                                        {...provided.dragHandleProps}
+                                                                        index={index}
+                                                                        name={serviceInstanceKey}
+                                                                        translateServiceInstanceList={
+                                                                            translateServiceInstanceList
+                                                                        }
+                                                                        pluginList={pluginList}
+                                                                        serviceInstanceConfigMap={
+                                                                            serviceInstanceConfigMap
+                                                                        }
+                                                                    />
+                                                                    <Spacer y={2} />
+                                                                </div>
+                                                            )}
+                                                        </Draggable>
+                                                    ) : (
+                                                        <></>
+                                                    );
+                                                })}
+                                        </div>
+                                    )}
+                                </Droppable>
+                            </DragDropContext>
+                        </div>
+                        {showPracticeArea && serviceInstanceConfigMap !== null && (
+                            <div
+                                className='h-full min-w-0 shrink-0 overflow-hidden'
+                                style={
+                                    normalTranslatePanelWidth !== null
+                                        ? { width: `${normalTranslatePanelWidth}px` }
+                                        : undefined
+                                }
+                            >
+                                <PracticeArea
+                                    translateServiceInstanceList={translateServiceInstanceList}
                                     serviceInstanceConfigMap={serviceInstanceConfigMap}
                                 />
-                            )}
-                        </div>
-                        <div className={`${hideLanguage && 'hidden'}`}>
-                            <LanguageArea />
-                            <Spacer y={2} />
-                        </div>
-                        <DragDropContext onDragEnd={onDragEnd}>
-                            <Droppable
-                                droppableId='droppable'
-                                direction='vertical'
-                            >
-                                {(provided) => (
-                                    <div
-                                        ref={provided.innerRef}
-                                        {...provided.droppableProps}
-                                    >
-                                        {translateServiceInstanceList !== null &&
-                                            serviceInstanceConfigMap !== null &&
-                                            translateServiceInstanceList.map((serviceInstanceKey, index) => {
-                                                const config = serviceInstanceConfigMap[serviceInstanceKey] ?? {};
-                                                const enable = config['enable'] ?? true;
-
-                                                return enable ? (
-                                                    <Draggable
-                                                        key={serviceInstanceKey}
-                                                        draggableId={serviceInstanceKey}
-                                                        index={index}
-                                                    >
-                                                        {(provided) => (
-                                                            <div
-                                                                ref={provided.innerRef}
-                                                                {...provided.draggableProps}
-                                                            >
-                                                                <TargetArea
-                                                                    {...provided.dragHandleProps}
-                                                                    index={index}
-                                                                    name={serviceInstanceKey}
-                                                                    translateServiceInstanceList={
-                                                                        translateServiceInstanceList
-                                                                    }
-                                                                    pluginList={pluginList}
-                                                                    serviceInstanceConfigMap={serviceInstanceConfigMap}
-                                                                />
-                                                                <Spacer y={2} />
-                                                            </div>
-                                                        )}
-                                                    </Draggable>
-                                                ) : (
-                                                    <></>
-                                                );
-                                            })}
-                                    </div>
-                                )}
-                            </Droppable>
-                        </DragDropContext>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

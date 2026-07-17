@@ -272,6 +272,8 @@
                     "model": "Model",
                     "stream": "Stream Mode",
                     "prompt_description": "By customizing the Prompt, you can customize the behavior of OpenAI. $text $from $to $detect will be replaced with the text to be translated, source language, target language and detected language.",
+                    "custom_headers": "Custom Request Headers",
+                    "custom_headers_description": "JSON object. Use $apiKey to reference the API Key above, for example { \"api-key\": \"$apiKey\" }.",
                     "add": "Add Prompt"
                 },
                 "geminipro": {
@@ -459,6 +461,25 @@
             "retry": "Try again",
             "delete_newline": "Delete Newline",
             "translate_back": "Translation back to the original"
+        },
+        "english_practice": {
+            "show": "Show English practice area",
+            "hide": "Hide English practice area",
+            "input_title": "English",
+            "input_placeholder": "Enter English…",
+            "feedback_title": "Suggestions",
+            "check_hint": "Check (Ctrl + Enter)",
+            "select_service": "Select model",
+            "no_service": "No compatible model",
+            "errors": {
+                "no_key": "The selected service has no API Key or authentication header. Complete its service configuration first.",
+                "auth": "Authentication failed. Check the API Key and custom request headers.",
+                "balance": "The service balance or quota is insufficient. Check the provider console.",
+                "address": "The Chat Completions endpoint was not found. Check the Base URL or full API address.",
+                "rate_limit": "The service is rate-limited or its quota was exceeded. Try again later.",
+                "request": "The service rejected the request. Check the model name and custom request arguments.",
+                "network": "The request failed. Check the network, service address, and provider status."
+            }
         },
         "recognize": {
             "recognize": "Recognize",

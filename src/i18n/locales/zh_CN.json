@@ -272,6 +272,8 @@
                     "model": "模型",
                     "stream": "流式输出",
                     "prompt_description": "通过自定义Prompt自定义OpenAI行为, $text $from $to $detect 将会被替换为 待翻译文本，源语言，目标语言和检测到的语言。",
+                    "custom_headers": "自定义请求头",
+                    "custom_headers_description": "JSON 对象，可使用 $apiKey 引用上方的 API Key，例如 { \"api-key\": \"$apiKey\" }。",
                     "add": "添加 Prompt"
                 },
                 "geminipro": {
@@ -459,6 +461,25 @@
             "retry": "重试",
             "delete_newline": "删除换行",
             "translate_back": "翻译回原文"
+        },
+        "english_practice": {
+            "show": "显示英语练习区",
+            "hide": "隐藏英语练习区",
+            "input_title": "英语表达",
+            "input_placeholder": "输入英文…",
+            "feedback_title": "修改建议",
+            "check_hint": "检查（Ctrl + Enter）",
+            "select_service": "选择模型",
+            "no_service": "暂无兼容模型",
+            "errors": {
+                "no_key": "所选服务没有 API Key 或认证请求头。请先完成服务配置。",
+                "auth": "认证失败。请检查 API Key 和自定义请求头。",
+                "balance": "服务余额或额度不足，请前往服务商控制台检查。",
+                "address": "未找到 Chat Completions 接口。请检查 Base URL 或完整 API 地址。",
+                "rate_limit": "请求过于频繁或已超过服务限额，请稍后重试。",
+                "request": "服务拒绝了请求。请检查模型名称和自定义请求参数。",
+                "network": "请求失败。请检查网络、服务地址和服务状态。"
+            }
         },
         "recognize": {
             "recognize": "重新识别",

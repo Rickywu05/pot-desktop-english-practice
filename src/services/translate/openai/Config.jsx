@@ -7,20 +7,16 @@ import toast, { Toaster } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { Dropdown } from '@nextui-org/react';
 import { open } from '@tauri-apps/api/shell';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { useConfig } from '../../../hooks/useConfig';
 import { useToastStyle } from '../../../hooks';
 import { translate } from './index';
 import { Language } from './index';
 import { INSTANCE_NAME_CONFIG_KEY } from '../../../utils/service_instance';
+import { defaultRequestArguments, OPENAI_COMPATIBLE_PROTOCOL } from '../../openai_compatible';
 
-export const defaultRequestArguments = JSON.stringify({
-    temperature: 0.1,
-    top_p: 0.99,
-    frequency_penalty: 0,
-    presence_penalty: 0,
-});
+export { defaultRequestArguments } from '../../openai_compatible';
 
 export function Config(props) {
     const { instanceKey, updateServiceList, onClose } = props;
@@ -30,6 +26,7 @@ export function Config(props) {
         {
             [INSTANCE_NAME_CONFIG_KEY]: t('services.translate.openai.title'),
             service: 'openai',
+            apiProtocol: OPENAI_COMPATIBLE_PROTOCOL,
             requestPath: 'https://api.openai.com/v1/chat/completions',
             model: 'gpt-3.5-turbo',
             apiKey: '',
@@ -43,31 +40,42 @@ export function Config(props) {
                 { role: 'user', content: `Translate into $to:\n"""\n$text\n"""` },
             ],
             requestArguments: defaultRequestArguments,
+            customHeaders: '{}',
         },
         { sync: false }
     );
     // 兼容旧版本
-    if (openaiConfig) {
+    useEffect(() => {
+        if (!openaiConfig) return;
+
+        const missingValues = {};
         if (openaiConfig.promptList === undefined) {
-            setOpenaiConfig({
-                ...openaiConfig,
-                promptList: [
-                    {
-                        role: 'system',
-                        content:
-                            'You are a professional translation engine, please translate the text into a colloquial, professional, elegant and fluent content, without the style of machine translation. You must only translate the text content, never interpret it.',
-                    },
-                    { role: 'user', content: `Translate into $to:\n"""\n$text\n"""` },
-                ],
-            });
+            missingValues.promptList = [
+                {
+                    role: 'system',
+                    content:
+                        'You are a professional translation engine, please translate the text into a colloquial, professional, elegant and fluent content, without the style of machine translation. You must only translate the text content, never interpret it.',
+                },
+                { role: 'user', content: `Translate into $to:\n"""\n$text\n"""` },
+            ];
         }
         if (openaiConfig.requestArguments === undefined) {
+            missingValues.requestArguments = defaultRequestArguments;
+        }
+        if (openaiConfig.apiProtocol === undefined) {
+            missingValues.apiProtocol = OPENAI_COMPATIBLE_PROTOCOL;
+        }
+        if (openaiConfig.customHeaders === undefined) {
+            missingValues.customHeaders = '{}';
+        }
+
+        if (Object.keys(missingValues).length > 0) {
             setOpenaiConfig({
                 ...openaiConfig,
-                requestArguments: defaultRequestArguments,
+                ...missingValues,
             });
         }
-    }
+    }, [openaiConfig, setOpenaiConfig]);
 
     const [isLoading, setIsLoading] = useState(false);
 
@@ -335,6 +343,26 @@ export function Config(props) {
                             setOpenaiConfig({
                                 ...openaiConfig,
                                 requestArguments: value,
+                            });
+                        }}
+                    />
+                </div>
+                <br />
+                <h3 className='my-auto'>{t('services.translate.openai.custom_headers')}</h3>
+                <p className='text-[10px] text-default-700'>
+                    {t('services.translate.openai.custom_headers_description')}
+                </p>
+                <div className='config-item'>
+                    <Textarea
+                        label=''
+                        labelPlacement='outside'
+                        variant='faded'
+                        value={openaiConfig['customHeaders'] ?? '{}'}
+                        placeholder='{ "api-key": "$apiKey" }'
+                        onValueChange={(value) => {
+                            setOpenaiConfig({
+                                ...openaiConfig,
+                                customHeaders: value,
                             });
                         }}
                     />

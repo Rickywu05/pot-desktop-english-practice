@@ -25,3 +25,26 @@ html {
 *::-webkit-scrollbar-thumb:hover {
     background: #c0c1c550;
 }
+
+.practice-markdown > * + * {
+    margin-top: 0.65em;
+}
+
+.practice-markdown ul,
+.practice-markdown ol {
+    padding-left: 1.4em;
+}
+
+.practice-markdown ul {
+    list-style: disc;
+}
+
+.practice-markdown ol {
+    list-style: decimal;
+}
+
+.practice-markdown code {
+    border-radius: 4px;
+    background: rgb(127 127 127 / 15%);
+    padding: 0.08em 0.28em;
+}

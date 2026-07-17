@@ -1,5 +1,8 @@
 <img width="200px" src="public/icon.svg" align="left"/>
 
+> [!IMPORTANT]
+> 这是基于 Pot 的非官方英语表达练习版，新增了可展开的英语表达练习区。项目仍遵循 GPL-3.0 许可证，原项目请访问 [pot-app/pot-desktop](https://github.com/pot-app/pot-desktop)。功能说明见 [英语表达练习版说明](ENGLISH_PRACTICE.md)。
+
 # Pot (派了个萌的翻译器)
 
 > 🌈 一个跨平台的划词翻译软件 ([QQ 频道](https://pd.qq.com/s/akns94e1r))
