@@ -490,6 +490,26 @@
                 "network": "请求失败。请检查网络、服务地址和服务状态。"
             }
         },
+        "literature_translation": {
+            "show": "显示文献语境翻译",
+            "hide": "隐藏文献语境翻译",
+            "title": "文献语境翻译",
+            "empty": "在上方输入或粘贴原文后，手动请求结合语境的翻译。",
+            "stale": "原文已更新",
+            "translate": "文献翻译",
+            "translate_hint": "结合全文语境翻译（仅手动请求）",
+            "select_service": "选择模型",
+            "no_service": "暂无兼容模型",
+            "errors": {
+                "no_key": "所选服务没有 API Key 或认证请求头。请先完成服务配置。",
+                "auth": "认证失败。请检查 API Key 和自定义请求头。",
+                "balance": "服务余额或额度不足，请前往服务商控制台检查。",
+                "address": "未找到 Chat Completions 接口。请检查 Base URL 或完整 API 地址。",
+                "rate_limit": "请求过于频繁或已超过服务限额，请稍后重试。",
+                "request": "服务拒绝了请求。请检查模型名称和自定义请求参数。",
+                "network": "请求失败。请检查网络、服务地址和服务状态。"
+            }
+        },
         "recognize": {
             "recognize": "重新识别",
             "translate": "翻译",

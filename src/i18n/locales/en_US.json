@@ -490,6 +490,26 @@
                 "network": "The request failed. Check the network, service address, and provider status."
             }
         },
+        "literature_translation": {
+            "show": "Show literature translation",
+            "hide": "Hide literature translation",
+            "title": "Literature translation",
+            "empty": "Enter or paste the source text above, then request a context-aware translation.",
+            "stale": "Source changed",
+            "translate": "Translate",
+            "translate_hint": "Translate with context (manual request only)",
+            "select_service": "Select model",
+            "no_service": "No compatible model",
+            "errors": {
+                "no_key": "The selected service has no API Key or authentication header. Complete its service configuration first.",
+                "auth": "Authentication failed. Check the API Key and custom request headers.",
+                "balance": "The service balance or quota is insufficient. Check the provider console.",
+                "address": "The Chat Completions endpoint was not found. Check the Base URL or full API address.",
+                "rate_limit": "The service is rate-limited or its quota was exceeded. Try again later.",
+                "request": "The service rejected the request. Check the model name and custom request arguments.",
+                "network": "The request failed. Check the network, service address, and provider status."
+            }
+        },
         "recognize": {
             "recognize": "Recognize",
             "translate": "Translate",

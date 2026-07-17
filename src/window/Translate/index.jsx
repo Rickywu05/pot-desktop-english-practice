@@ -9,9 +9,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { listen } from '@tauri-apps/api/event';
 import { BsPinFill } from 'react-icons/bs';
-import { MdOutlineSchool } from 'react-icons/md';
+import { MdMenuBook, MdOutlineSchool } from 'react-icons/md';
 
 import LanguageArea from './components/LanguageArea';
+import LiteratureTranslationArea from './components/LiteratureTranslationArea';
 import SourceArea from './components/SourceArea';
 import TargetArea from './components/TargetArea';
 import PracticeArea from './components/PracticeArea';
@@ -30,7 +31,6 @@ let resizeTimeout = null;
 let moveTimeout = null;
 
 const PRACTICE_PANEL_GAP = 8;
-const PRACTICE_PANEL_HORIZONTAL_PADDING = 16;
 
 const listenBlur = () => {
     return listen('tauri://blur', () => {
@@ -94,9 +94,8 @@ export default function Translate() {
     const [hideLanguage] = useConfig('hide_language', false);
     const [practiceServiceInstance] = useConfig('english_practice_service_instance', '');
     const [practiceVisible, setPracticeVisible] = useState(false);
-    const [normalTranslatePanelWidth, setNormalTranslatePanelWidth] = useState(null);
+    const [literatureTranslationVisible, setLiteratureTranslationVisible] = useState(false);
     const [pined, setPined] = useState(false);
-    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const [pluginList, setPluginList] = useState(null);
     const [serviceInstanceConfigMap, setServiceInstanceConfigMap] = useState(null);
     const practiceVisibleRef = useRef(false);
@@ -291,12 +290,6 @@ export default function Translate() {
         };
     }, [translateServiceInstanceList]);
 
-    useEffect(() => {
-        const updateWindowWidth = () => setWindowWidth(window.innerWidth);
-        window.addEventListener('resize', updateWindowWidth);
-        return () => window.removeEventListener('resize', updateWindowWidth);
-    }, []);
-
     const togglePracticeArea = async () => {
         if (practiceResizeRef.current) return;
         practiceResizeRef.current = true;
@@ -310,7 +303,6 @@ export default function Translate() {
             if (!practiceVisibleRef.current) {
                 const translatePanelWidth =
                     translatePanelRef.current?.getBoundingClientRect().width ?? window.innerWidth;
-                setNormalTranslatePanelWidth(translatePanelWidth);
                 normalWindowBoundsRef.current = {
                     width: currentSize.width,
                     height: currentSize.height,
@@ -349,12 +341,6 @@ export default function Translate() {
             practiceResizeRef.current = false;
         }
     };
-
-    const requiredPracticeWidth =
-        normalTranslatePanelWidth === null
-            ? Number.POSITIVE_INFINITY
-            : normalTranslatePanelWidth * 2 + PRACTICE_PANEL_GAP + PRACTICE_PANEL_HORIZONTAL_PADDING;
-    const showPracticeArea = practiceVisible && windowWidth >= requiredPracticeWidth;
 
     return (
         pluginList && (
@@ -404,6 +390,28 @@ export default function Translate() {
                                 />
                             </Button>
                         </Tooltip>
+                        <Tooltip
+                            content={
+                                literatureTranslationVisible
+                                    ? t('literature_translation.hide')
+                                    : t('literature_translation.show')
+                            }
+                        >
+                            <Button
+                                isIconOnly
+                                size='sm'
+                                variant='flat'
+                                disableAnimation
+                                className='my-auto bg-transparent'
+                                onPress={() => setLiteratureTranslationVisible(!literatureTranslationVisible)}
+                            >
+                                <MdMenuBook
+                                    className={`text-[20px] ${
+                                        literatureTranslationVisible ? 'text-primary' : 'text-default-400'
+                                    }`}
+                                />
+                            </Button>
+                        </Tooltip>
                     </div>
                     <Button
                         isIconOnly
@@ -422,12 +430,7 @@ export default function Translate() {
                     <div className='flex h-full min-h-0 gap-2 overflow-hidden'>
                         <div
                             ref={translatePanelRef}
-                            className={`${showPracticeArea ? 'shrink-0' : 'w-full'} min-w-0 overflow-y-auto`}
-                            style={
-                                showPracticeArea && normalTranslatePanelWidth !== null
-                                    ? { width: `${normalTranslatePanelWidth}px` }
-                                    : undefined
-                            }
+                            className={`${practiceVisible ? 'flex-1 basis-0' : 'w-full'} min-w-0 overflow-y-auto`}
                         >
                             <div>
                                 {serviceInstanceConfigMap !== null && (
@@ -437,6 +440,15 @@ export default function Translate() {
                                     />
                                 )}
                             </div>
+                            {literatureTranslationVisible && serviceInstanceConfigMap !== null && (
+                                <>
+                                    <LiteratureTranslationArea
+                                        translateServiceInstanceList={translateServiceInstanceList}
+                                        serviceInstanceConfigMap={serviceInstanceConfigMap}
+                                    />
+                                    <Spacer y={2} />
+                                </>
+                            )}
                             <div className={`${hideLanguage && 'hidden'}`}>
                                 <LanguageArea />
                                 <Spacer y={2} />
@@ -500,12 +512,7 @@ export default function Translate() {
                         </div>
                         {serviceInstanceConfigMap !== null && (
                             <div
-                                className={`${showPracticeArea ? '' : 'hidden'} h-full min-w-0 shrink-0 overflow-hidden`}
-                                style={
-                                    normalTranslatePanelWidth !== null
-                                        ? { width: `${normalTranslatePanelWidth}px` }
-                                        : undefined
-                                }
+                                className={practiceVisible ? 'h-full min-w-0 flex-1 basis-0 overflow-hidden' : 'hidden'}
                             >
                                 <PracticeArea
                                     translateServiceInstanceList={translateServiceInstanceList}
