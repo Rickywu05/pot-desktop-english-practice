@@ -19,6 +19,7 @@ import { osType } from '../../utils/env';
 import { useConfig } from '../../hooks';
 import { store } from '../../utils/store';
 import { info } from 'tauri-plugin-log-api';
+import { findRecoverableOpenAIServiceInstanceKeys } from '../../services/translate/openai/service_instances';
 
 let blurTimeout = null;
 let resizeTimeout = null;
@@ -210,6 +211,24 @@ export default function Translate() {
         }
     }, []);
 
+    useEffect(() => {
+        if (translateServiceInstanceList === null) return;
+
+        let cancelled = false;
+        const recoverConfiguredOpenAIServices = async () => {
+            const entries = await store.entries();
+            const recoverableKeys = findRecoverableOpenAIServiceInstanceKeys(entries, translateServiceInstanceList);
+            if (cancelled || recoverableKeys.length === 0) return;
+
+            await setTranslateServiceInstanceList([...translateServiceInstanceList, ...recoverableKeys], true);
+        };
+
+        void recoverConfiguredOpenAIServices();
+        return () => {
+            cancelled = true;
+        };
+    }, [translateServiceInstanceList, setTranslateServiceInstanceList]);
+
     const loadServiceInstanceConfigMap = async () => {
         const config = {};
         for (const serviceInstanceKey of translateServiceInstanceList) {
@@ -243,6 +262,26 @@ export default function Translate() {
     ]);
 
     useEffect(() => {
+        if (translateServiceInstanceList === null) return;
+
+        const unlistenPromises = translateServiceInstanceList.map((instanceKey) => {
+            const eventKey = instanceKey.replaceAll('.', '_').replaceAll('@', ':');
+            return listen(`${eventKey}_changed`, (event) => {
+                setServiceInstanceConfigMap((currentMap) => {
+                    if (currentMap === null) return currentMap;
+                    return { ...currentMap, [instanceKey]: event.payload ?? {} };
+                });
+            });
+        });
+
+        return () => {
+            for (const unlistenPromise of unlistenPromises) {
+                void unlistenPromise.then((unlistenService) => unlistenService());
+            }
+        };
+    }, [translateServiceInstanceList]);
+
+    useEffect(() => {
         const updateWindowWidth = () => setWindowWidth(window.innerWidth);
         window.addEventListener('resize', updateWindowWidth);
         return () => window.removeEventListener('resize', updateWindowWidth);
@@ -259,7 +298,8 @@ export default function Translate() {
             const currentPosition = await appWindow.outerPosition();
 
             if (!practiceVisibleRef.current) {
-                const translatePanelWidth = translatePanelRef.current?.getBoundingClientRect().width ?? window.innerWidth;
+                const translatePanelWidth =
+                    translatePanelRef.current?.getBoundingClientRect().width ?? window.innerWidth;
                 setNormalTranslatePanelWidth(translatePanelWidth);
                 normalWindowBoundsRef.current = {
                     width: currentSize.width,
@@ -270,7 +310,7 @@ export default function Translate() {
 
                 const expandedWidth = Math.min(
                     currentSize.width + (translatePanelWidth + PRACTICE_PANEL_GAP) * factor,
-                    monitor.size.width,
+                    monitor.size.width
                 );
                 const rightEdge = monitor.position.x + monitor.size.width;
                 const expandedX = Math.max(monitor.position.x, Math.min(currentPosition.x, rightEdge - expandedWidth));

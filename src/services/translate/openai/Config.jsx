@@ -16,11 +16,12 @@ import { Language } from './index';
 import { INSTANCE_NAME_CONFIG_KEY } from '../../../utils/service_instance';
 import { defaultRequestArguments, OPENAI_COMPATIBLE_PROTOCOL } from '../../openai_compatible';
 import { DEFAULT_OPENAI_PROVIDER_PRESET, inferOpenAIProviderPreset, OPENAI_PROVIDER_PRESETS } from './presets';
+import { persistOpenAIServiceInstance } from './service_persistence';
 
 export { defaultRequestArguments } from '../../openai_compatible';
 
 export function Config(props) {
-    const { instanceKey, updateServiceList, onClose } = props;
+    const { instanceKey, onClose } = props;
     const { t } = useTranslation();
     const defaultPreset = OPENAI_PROVIDER_PRESETS[DEFAULT_OPENAI_PROVIDER_PRESET];
     const [openaiConfig, setOpenaiConfig] = useConfig(
@@ -83,7 +84,8 @@ export function Config(props) {
         }
     }, [openaiConfig, setOpenaiConfig]);
 
-    const [isLoading, setIsLoading] = useState(false);
+    const [isTesting, setIsTesting] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const [showAdvanced, setShowAdvanced] = useState(false);
 
     const selectedPresetKey = openaiConfig ? inferOpenAIProviderPreset(openaiConfig) : 'custom';
@@ -116,24 +118,36 @@ export function Config(props) {
 
     const toastStyle = useToastStyle();
 
+    const testConnection = async () => {
+        setIsTesting(true);
+        try {
+            await translate('hello', Language.auto, Language.zh_cn, { config: openaiConfig });
+            toast.success(t('config.service.test_success'), { style: toastStyle });
+        } catch (error) {
+            toast.error(`${t('config.service.test_failed')}: ${error}`, { style: toastStyle });
+        } finally {
+            setIsTesting(false);
+        }
+    };
+
+    const saveConfig = async () => {
+        setIsSaving(true);
+        try {
+            await persistOpenAIServiceInstance(instanceKey, openaiConfig);
+            onClose();
+        } catch (error) {
+            toast.error(`${t('config.service.save_failed')}: ${error}`, { style: toastStyle });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     return (
         openaiConfig !== null && (
             <form
-                onSubmit={(e) => {
-                    e.preventDefault();
-                    setIsLoading(true);
-                    translate('hello', Language.auto, Language.zh_cn, { config: openaiConfig }).then(
-                        () => {
-                            setIsLoading(false);
-                            setOpenaiConfig(openaiConfig, true);
-                            updateServiceList(instanceKey);
-                            onClose();
-                        },
-                        (e) => {
-                            setIsLoading(false);
-                            toast.error(t('config.service.test_failed') + e.toString(), { style: toastStyle });
-                        }
-                    );
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    void saveConfig();
                 }}
             >
                 <Toaster />
@@ -471,14 +485,27 @@ export function Config(props) {
                         ? t('services.translate.openai.hide_advanced')
                         : t('services.translate.openai.show_advanced')}
                 </Button>
-                <Button
-                    type='submit'
-                    isLoading={isLoading}
-                    fullWidth
-                    color='primary'
-                >
-                    {t('common.save')}
-                </Button>
+                <div className='flex gap-2'>
+                    <Button
+                        type='button'
+                        isLoading={isTesting}
+                        isDisabled={isTesting || isSaving}
+                        fullWidth
+                        variant='flat'
+                        onPress={() => void testConnection()}
+                    >
+                        {t('config.service.test_connection')}
+                    </Button>
+                    <Button
+                        type='submit'
+                        isLoading={isSaving}
+                        isDisabled={isTesting}
+                        fullWidth
+                        color='primary'
+                    >
+                        {t('common.save')}
+                    </Button>
+                </div>
             </form>
         )
     );

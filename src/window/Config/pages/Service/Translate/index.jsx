@@ -56,12 +56,12 @@ export default function Translate(props) {
             deleteKey(instanceKey);
         }
     };
-    const updateServiceInstanceList = (instanceKey) => {
+    const updateServiceInstanceList = async (instanceKey) => {
         if (translateServiceInstanceList.includes(instanceKey)) {
             return;
         } else {
             const newList = [...translateServiceInstanceList, instanceKey];
-            setTranslateServiceInstanceList(newList);
+            await setTranslateServiceInstanceList(newList, true);
         }
     };
 

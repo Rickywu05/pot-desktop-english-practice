@@ -8,15 +8,20 @@ export const useConfig = (key, defaultValue, options = {}) => {
     const [property, setPropertyState, getProperty] = useGetState(null);
     const { sync = true } = options;
 
+    const persistToStore = useCallback(
+        async (v) => {
+            await store.set(key, v);
+            await store.save();
+            const eventKey = key.replaceAll('.', '_').replaceAll('@', ':');
+            await emit(`${eventKey}_changed`, v);
+        },
+        [key]
+    );
+
     // 同步到Store (State -> Store)
     const syncToStore = useCallback(
-        debounce((v) => {
-            store.set(key, v);
-            store.save();
-            let eventKey = key.replaceAll('.', '_').replaceAll('@', ':');
-            emit(`${eventKey}_changed`, v);
-        }),
-        []
+        debounce((v) => void persistToStore(v)),
+        [persistToStore]
     );
 
     // 同步到State (Store -> State)
@@ -36,11 +41,15 @@ export const useConfig = (key, defaultValue, options = {}) => {
         }
     }, []);
 
-    const setProperty = useCallback((v, forceSync = false) => {
-        setPropertyState(v);
-        const isSync = forceSync || sync;
-        isSync && syncToStore(v);
-    }, []);
+    const setProperty = useCallback(
+        (v, forceSync = false) => {
+            setPropertyState(v);
+            if (forceSync) return persistToStore(v);
+            if (sync) syncToStore(v);
+            return undefined;
+        },
+        [persistToStore, setPropertyState, sync, syncToStore]
+    );
 
     // 初始化
     useEffect(() => {
