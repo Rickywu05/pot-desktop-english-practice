@@ -1,5 +1,11 @@
 <img width="200px" src="public/icon.svg" align="left"/>
 
+> [!IMPORTANT]
+> This repository is an unofficial fork of [Pot](https://github.com/pot-app/pot-desktop). It adds a collapsible AI-assisted English expression practice area to the translation window. See [ENGLISH_PRACTICE.md](ENGLISH_PRACTICE.md) for details and use this repository's [Releases](https://github.com/Rickywu05/pot-desktop-english-practice/releases) for the modified Windows build.
+
+> [!WARNING]
+> The current preview is an unsigned Windows x64 build. It is not an official Pot release. Chinese source text and user-written English are sent to the third-party AI service selected by the user.
+
 # Pot (A cute translator)
 
 > A cross-platform translator application ([Telegram Group](https://t.me/pot_app))

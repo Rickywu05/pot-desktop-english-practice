@@ -1,11 +1,89 @@
-<img width="200px" src="public/icon.svg" align="left"/>
+<div align="center">
+    <img width="120px" src="public/icon.svg" alt="Pot 图标"/>
+    <h1>Pot 英语表达练习版</h1>
+    <p>在 Pot 原有翻译窗口右侧增加 AI 英语表达练习区。</p>
+
+    <p>
+        <a href="https://github.com/Rickywu05/pot-desktop-english-practice/releases"><img alt="Release" src="https://img.shields.io/github/v/release/Rickywu05/pot-desktop-english-practice?include_prereleases&amp;label=preview"/></a>
+        <a href="https://github.com/Rickywu05/pot-desktop-english-practice/releases"><img alt="Windows x64" src="https://img.shields.io/badge/platform-Windows%20x64-0078D4?logo=windows"/></a>
+        <a href="LICENSE"><img alt="License: GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-blue.svg"/></a>
+    </p>
+    <p>
+        <a href="https://github.com/Rickywu05/pot-desktop-english-practice/releases/tag/english-practice-preview-3">下载安装包</a> ·
+        <a href="ENGLISH_PRACTICE.md">功能说明</a> ·
+        <a href="https://github.com/pot-app/pot-desktop">Pot 官方项目</a>
+    </p>
+</div>
 
 > [!IMPORTANT]
-> 这是基于 Pot 的非官方英语表达练习版，新增了可展开的英语表达练习区。项目仍遵循 GPL-3.0 许可证，原项目请访问 [pot-app/pot-desktop](https://github.com/pot-app/pot-desktop)。功能说明见 [英语表达练习版说明](ENGLISH_PRACTICE.md)。
+> 本仓库是基于 [Pot](https://github.com/pot-app/pot-desktop) 的非官方修改版，不代表 Pot 官方。本分支基于上游 `master` 提交 `594d32e` 开发，并继续遵循 GPL-3.0 许可证。
 
-# Pot (派了个萌的翻译器)
+## 本分支新增功能
 
-> 🌈 一个跨平台的划词翻译软件 ([QQ 频道](https://pd.qq.com/s/akns94e1r))
+- 点击翻译窗口左上角的学士帽按钮，在原窗口右侧展开或收起英语表达练习区。
+- 左侧完整保留 Pot 原有翻译功能；右侧提供英文输入框和 AI 修改建议框。
+- AI 根据左侧中文原文检查用户自己写的英文，不把普通机器翻译结果作为判断依据。
+- 支持点击检查按钮或使用 `Ctrl + Enter`，反馈支持 Markdown 与一键复制。
+- 复用 Pot 的 OpenAI-compatible 服务配置，并记住所选服务实例。
+- 内置 GLM、Kimi、MiniMax、DeepSeek 和小米 MiMo 配置预设，通常只需填写 API Key。
+- 支持 Base URL、模型名称、自定义请求参数、自定义请求头，以及兼容的流式或非流式 Chat Completions 响应。
+- 练习区展开时左右等宽；收起后恢复原窗口大小，不影响原有翻译流程。
+
+## 下载与安装
+
+当前可直接使用的构建为 **Preview 3**：
+
+- [下载 Windows x64 安装包](https://github.com/Rickywu05/pot-desktop-english-practice/releases/download/english-practice-preview-3/Pot-English-Practice-Preview-3-x64-setup.exe)
+- [查看全部 Releases 和版本说明](https://github.com/Rickywu05/pot-desktop-english-practice/releases)
+- SHA256：`8E04097A19369C625E50D8FA944B9816AFAA2DE70B13C3F4AEAEFEDC5FC7B512`
+
+> [!WARNING]
+> Preview 3 目前只提供 Windows x64 安装包，并且没有商业代码签名证书。Windows 可能显示“未知发布者”。安装前可使用上面的 SHA256 校验文件完整性。
+
+如果电脑中已经运行 Pot，请先从系统托盘退出旧进程再安装。本修改版与官方 Pot 使用相同的应用标识和本地配置目录，安装前建议备份重要配置。
+
+## 快速使用
+
+1. 打开 Pot 设置，进入翻译服务页面。
+2. 添加 OpenAI-compatible 服务，选择 DeepSeek、MiMo 等预设。
+3. 填写 API Key，点击“测试连接”，成功后保存。
+4. 正常打开翻译窗口并输入或获取中文原文。
+5. 点击左上角学士帽按钮，在右侧输入自己的英文。
+6. 点击魔法棒按钮，或按 `Ctrl + Enter` 获取修改建议。
+
+练习区会自动选择已经配置的兼容服务，也可以在右上框底部切换服务实例。配置页保存的是服务实例 ID，不依赖用户给服务起的名称。
+
+## AI 服务与兼容性
+
+练习功能只使用标准文本 `POST /chat/completions` 请求，不依赖 Function Calling、Tools、Responses API或多模态能力。普通 OpenAI、DeepSeek、MiMo 以及其他兼容 OpenAI Chat Completions 的服务可以共用同一请求层。
+
+预设中的接口地址、模型和参数用于简化首次配置；供应商调整接口后，可以在“高级设置”中修改 Base URL、模型名称、请求参数和请求头。本项目不会把模型名称限制为 `gpt-*`。
+
+## 隐私与费用
+
+> [!CAUTION]
+> 点击 AI 检查后，左侧中文原文和右侧英文会发送给你选择的第三方模型服务。请勿提交密码、API Key、身份证件、商业机密等敏感内容，并自行关注服务商的隐私条款、余额和调用费用。
+
+API Key 仅保存在 Pot 使用的本地配置中，不应提交到 Git 仓库、Issue、截图或日志。更换电脑后需要重新配置服务和 API Key。
+
+## 项目关系与反馈范围
+
+- 上游项目：[pot-app/pot-desktop](https://github.com/pot-app/pot-desktop)
+- 本修改版：[Rickywu05/pot-desktop-english-practice](https://github.com/Rickywu05/pot-desktop-english-practice)
+- 详细变更：[ENGLISH_PRACTICE.md](ENGLISH_PRACTICE.md)
+- 开源许可证：[GPL-3.0](LICENSE)
+
+英语练习区、AI 预设或本仓库安装包的问题，请反馈到本仓库；Pot 原有功能的问题请先确认是否也能在官方版本中复现。
+
+---
+
+# Pot 官方项目原说明
+
+以下内容保留自 Pot 上游 README，便于查阅原项目功能与构建方式。上游安装链接指向 Pot 官方版本，不包含本仓库新增的英语练习区。
+
+# Pot（派了个萌的翻译器）
+
+> 🌈 一个跨平台的划词翻译软件（[QQ 频道](https://pd.qq.com/s/akns94e1r)）
 
 ![License](https://img.shields.io/github/license/pot-app/pot-desktop.svg)
 ![Tauri](https://img.shields.io/badge/Tauri-1.6.8-blue?logo=tauri)
