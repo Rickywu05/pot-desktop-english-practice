@@ -7,6 +7,7 @@ export async function translate(text, from, to) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
+            'User-Agent': 'Pot-Desktop',
         },
         query: {
             id: uuidv4().replaceAll('-', '') + '-0-0',

@@ -214,6 +214,9 @@ async function yandex_detect(text) {
 
     let res = await fetch('https://translate.yandex.net/api/v1/tr.json/detect', {
         method: 'GET',
+        headers: {
+            'User-Agent': 'Pot-Desktop',
+        },
         query: {
             id: uuidv4().replaceAll('-', '') + '-0-0',
             srv: 'android',
